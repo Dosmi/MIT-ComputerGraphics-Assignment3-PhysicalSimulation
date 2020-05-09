@@ -1,6 +1,10 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+// additional includes for printing:
+#include <sstream>
+#include <iostream>
+#include <iomanip>
 
 #include "Vector3f.h"
 #include "Vector2f.h"
@@ -48,14 +52,14 @@ Vector3f::Vector3f( float x, const Vector2f& yz )
 	m_elements[1] = yz.x();
 	m_elements[2] = yz.y();
 }
-
+// copy constructor:
 Vector3f::Vector3f( const Vector3f& rv )
 {
     m_elements[0] = rv[0];
     m_elements[1] = rv[1];
     m_elements[2] = rv[2];
 }
-
+// assignment operator
 Vector3f& Vector3f::operator = ( const Vector3f& rv )
 {
     if( this != &rv )
@@ -201,6 +205,19 @@ void Vector3f::print() const
 {
 	printf( "< %.4f, %.4f, %.4f >\n",
 		m_elements[0], m_elements[1], m_elements[2] );
+}
+
+// 2020-05-08 implemented function that instead of printing the ...
+// vector elements, just returns a string of what is would print instead
+std::string Vector3f::getprint() const
+{
+  std::stringstream to_print;
+  // print vectors with 4 digit precision:
+  to_print << std::fixed << std::setprecision(4)
+           << "<" << m_elements[0]
+           << " " << m_elements[1]
+           << " " << m_elements[2] << ">";
+  return to_print.str();
 }
 
 Vector3f& Vector3f::operator += ( const Vector3f& v )

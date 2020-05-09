@@ -19,12 +19,15 @@
 
 using namespace std;
 
-// Globals here.
-namespace
-{
+// #define dbug std::cout<<__FILE__<<"-"<<__LINE__<<": "<< // Debug cout
+// #define eol << std::endl // End Of Line
 
-    ParticleSystem *system;
-    TimeStepper * timeStepper;
+// Globals here.
+namespace 
+{
+    ParticleSystem* system;
+    TimeStepper* timeStepper;
+    float step_h;
 
   // initialize your particle systems
   ///TODO: read argv here. set timestepper , step size etc
@@ -33,7 +36,14 @@ namespace
     // seed the random number generator with the current time
     srand( time( NULL ) );
     system = new SimpleSystem();
-    timeStepper = new RK4();		
+    dbug logvar(argv[1]) eol;
+    // std::cin.get();
+    if (std::string(argv[1])  == "e") timeStepper = new ForwardEuler();
+    else if (std::string(argv[1])  == "t") timeStepper = new Trapzoidal();
+    else timeStepper = new RK4();
+
+    step_h = atof(argv[2]);
+    dbug logvar(step_h) eol;
   }
 
   // Take a step forward for the particle shower
@@ -42,40 +52,41 @@ namespace
   void stepSystem()
   {
       ///TODO The stepsize should change according to commandline arguments
-    const float h = 0.04f;
+    //const float h = 0.04f; // float(argv[2]) // was set 0.04f by default
+
     if(timeStepper!=0){
-      timeStepper->takeStep(system,h);
+      timeStepper->takeStep(system,step_h);
     }
   }
 
   // Draw the current particle positions
   void drawSystem()
   {
-    
+
     // Base material colors (they don't change)
     GLfloat particleColor[] = {0.4f, 0.7f, 1.0f, 1.0f};
     GLfloat floorColor[] = {1.0f, 0.0f, 0.0f, 1.0f};
-    
+
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, particleColor);
-    
+
     glutSolidSphere(0.1f,10.0f,10.0f);
-    
+
     system->draw();
-    
-    
+
+
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, floorColor);
     glPushMatrix();
     glTranslatef(0.0f,-5.0f,0.0f);
     glScaled(50.0f,0.01f,50.0f);
     glutSolidCube(1);
     glPopMatrix();
-    
+
   }
-        
+
 
     //-------------------------------------------------------------------
-    
-        
+
+
     // This is the camera
     Camera camera;
 
@@ -109,7 +120,7 @@ namespace
             break;
         }
         default:
-            cout << "Unhandled key press " << key << "." << endl;        
+            cout << "Unhandled key press " << key << "." << endl;
         }
 
         glutPostRedisplay();
@@ -132,7 +143,7 @@ namespace
         if (state == GLUT_DOWN)
         {
             g_mousePressed = true;
-            
+
             switch (button)
             {
             case GLUT_LEFT_BUTTON:
@@ -145,7 +156,7 @@ namespace
                 camera.MouseClick(Camera::RIGHT, x,y);
             default:
                 break;
-            }                       
+            }
         }
         else
         {
@@ -158,8 +169,8 @@ namespace
     // Called when mouse is moved while button pressed.
     void motionFunc(int x, int y)
     {
-        camera.MouseDrag(x,y);        
-    
+        camera.MouseDrag(x,y);
+
         glutPostRedisplay();
     }
 
@@ -191,7 +202,7 @@ namespace
         // Setup polygon drawing
         glShadeModel(GL_SMOOTH);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        
+
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -205,8 +216,8 @@ namespace
         // Clear the rendering window
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glMatrixMode( GL_MODELVIEW );  
-        glLoadIdentity();              
+        glMatrixMode( GL_MODELVIEW );
+        glLoadIdentity();
 
         // Light color (RGBA)
         GLfloat Lt0diff[] = {1.0,1.0,1.0,1.0};
@@ -252,24 +263,20 @@ namespace
             glPopAttrib();
             glPopMatrix();
         }
-                 
+
         // Dump the image to the screen.
         glutSwapBuffers();
     }
 
     void timerFunc(int t)
     {
+        dbug logvar(t) eol;
         stepSystem();
 
         glutPostRedisplay();
 
         glutTimerFunc(t, &timerFunc, t);
     }
-
-    
-
-    
-    
 }
 
 // Main routine.
@@ -278,18 +285,18 @@ int main( int argc, char* argv[] )
 {
     glutInit( &argc, argv );
 
-    // We're going to animate it, so double buffer 
+    // We're going to animate it, so double buffer
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
 
     // Initial parameters for window position and size
     glutInitWindowPosition( 60, 60 );
     glutInitWindowSize( 600, 600 );
-    
+
     camera.SetDimensions( 600, 600 );
 
     camera.SetDistance( 10 );
     camera.SetCenter( Vector3f::ZERO );
-    
+
     glutCreateWindow("Assignment 4");
 
     // Initialize OpenGL parameters.
@@ -315,7 +322,7 @@ int main( int argc, char* argv[] )
     // Trigger timerFunc every 20 msec
     glutTimerFunc(20, timerFunc, 20);
 
-        
+
     // Start the main loop.  glutMainLoop never returns.
     glutMainLoop();
 
