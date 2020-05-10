@@ -49,22 +49,21 @@ void Trapzoidal::takeStep(ParticleSystem* particleSystem, float stepSize)
    */
    // dbug className(__PRETTY_FUNCTION__) eol;
    dbug "taking trapzoidal step ... " eol;
-   dbug __PRETTY_FUNCTION__ eol;
-   // iterating through all particles, we will gather a new state:
-   vector<Vector3f> intermediate_state;
-   vector<Vector3f> new_state;
    // to be updated is the state of the passed PS (particle system)
    vector<Vector3f> original_state = particleSystem->getState();
+   vector<Vector3f> intermediate_state;
+   // iterating through all particles, we will compute the new state:
+   vector<Vector3f> new_state;
    // compute intermediate derivative (slope, which is used ...
    // ... to take the initial step)
    vector<Vector3f> f0 = particleSystem->evalF(original_state);
 
-   // for every particle in the system, compute particle new state using
-   // ... Trapzoidal method:
+   // for every particle in the system, compute particle intermediate state
+   // ... using f0 slope:
    for (unsigned int i = 0; i < original_state.size(); i++)
    {
      Vector3f intermediate_particle_state;
-     // take an euler step (step from original state with first slope)
+     // take an euler step (step from original state with first slope f0)
      intermediate_particle_state = original_state[i] + stepSize * f0[i];
      intermediate_state.push_back(intermediate_particle_state);
    }
@@ -72,13 +71,13 @@ void Trapzoidal::takeStep(ParticleSystem* particleSystem, float stepSize)
    // ... moving by using the initial slope:
    vector<Vector3f> f1 = particleSystem->evalF(intermediate_state);
 
-   for (unsigned int i = 0; i < intermediate_state.size(); i++)
+   for (unsigned int i = 0; i < original_state.size(); i++)
    {
      Vector3f new_particle_state;
      // average the two slopes to get a more reliable new slope:
      Vector3f derivative_average = (f0[i] + f1[i]) / 2.0;
      // finally, for each particle i will compute the new trapizoidal state
-     new_particle_state = original_state[i] + stepSize/2.0 * derivative_average;
+     new_particle_state = original_state[i] + stepSize * derivative_average;
 
      dbug "new_particle_state: " << new_particle_state.getprint() eol;
      new_state.push_back(new_particle_state);
