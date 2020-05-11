@@ -12,10 +12,11 @@
 #include <vecmath.h>
 #include "camera.h"
 
-///TODO: include more headers if necessary
+///SUGGESTED: include more headers if necessary
 
 #include "TimeStepper.hpp"
 #include "simpleSystem.h"
+#include "pendulumSystem.h"
 
 using namespace std;
 
@@ -23,27 +24,27 @@ using namespace std;
 // #define eol << std::endl // End Of Line
 
 // Globals here.
-namespace 
+namespace
 {
     ParticleSystem* system;
     TimeStepper* timeStepper;
     float step_h;
 
   // initialize your particle systems
-  ///TODO: read argv here. set timestepper , step size etc
+  ///COMPLETED: read argv here. set timestepper , step size etc
   void initSystem(int argc, char * argv[])
   {
     // seed the random number generator with the current time
     srand( time( NULL ) );
-    system = new SimpleSystem();
-    dbug logvar(argv[1]) eol;
-    // std::cin.get();
+    // system = new SimpleSystem();
+    system = new PendulumSystem(3);
+    dbug dvar(argv[1]) eol;
     if (std::string(argv[1])  == "e") timeStepper = new ForwardEuler();
     else if (std::string(argv[1])  == "t") timeStepper = new Trapzoidal();
     else timeStepper = new RK4();
 
     step_h = atof(argv[2]);
-    dbug logvar(step_h) eol;
+    dbug dvar(step_h) eol;
   }
 
   // Take a step forward for the particle shower
@@ -51,9 +52,7 @@ namespace
   ///and switch between different timeSteppers
   void stepSystem()
   {
-      ///TODO The stepsize should change according to commandline arguments
-    //const float h = 0.04f; // float(argv[2]) // was set 0.04f by default
-
+    ///COMPLETED The stepsize should change according to commandline arguments
     if(timeStepper!=0){
       timeStepper->takeStep(system,step_h);
     }
@@ -270,7 +269,7 @@ namespace
 
     void timerFunc(int t)
     {
-        dbug logvar(t) eol;
+        dbug dvar(t) eol;
         stepSystem();
 
         glutPostRedisplay();

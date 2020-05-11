@@ -1,4 +1,5 @@
 #include "particleSystem.h"
-// constructor initialises number of particles as passed 
+// constructor initialises number of particles as passed
 ParticleSystem::ParticleSystem(int nParticles)
-  : m_numParticles(nParticles){}
+  : m_numParticles(nParticles)
+    {}

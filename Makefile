@@ -8,7 +8,9 @@ INCFLAGS += -I /usr/include/GL
 # - function name the debug message is coming from,
 # - line number in that file the debug message is coming from
 
-MACROS    = -D'logvar(x)=\#x<<" = "<<x' 
+MACROS    = -D'dvar(x)=\#x<<" = "<<x'
+# MACROS   += -DWAIT='std::cin.get()'
+MACROS   += -DWAIT=''
 MACROS   += -Ddbug='std::cout<<__FILE__<<":"<<__FUNCTION__<<"-"<<__LINE__<<":							"<<'
 MACROS   += -Deol='<<std::endl<<__PRETTY_FUNCTION__<<std::endl<<std::endl'
 

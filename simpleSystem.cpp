@@ -36,7 +36,7 @@ void SimpleSystem::draw()
 		for (unsigned int i = 0; i < m_vVecState.size(); i++)
 		{
 			Vector3f pos = m_vVecState[i];//YOUR PARTICLE POSITION
-			dbug logvar(pos.getprint()) eol;
+			dbug dvar(pos.getprint()) eol;
 
 			glPushMatrix();
 			glTranslatef(pos[0], pos[1], pos[2] );

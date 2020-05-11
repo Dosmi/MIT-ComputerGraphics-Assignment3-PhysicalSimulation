@@ -1,6 +1,6 @@
 #include "TimeStepper.hpp"
 #include <iostream>
-///TODO: implement Explicit Euler time integrator here
+///COMPLETED: implement Explicit Euler time integrator here 
 void ForwardEuler::takeStep(ParticleSystem* particleSystem, float stepSize)
 { /* parameters use lowerCamelCase, local variables use underscore_casing */
   // 'Euler method' is the simplest time integrator.
@@ -32,8 +32,7 @@ void ForwardEuler::takeStep(ParticleSystem* particleSystem, float stepSize)
   // update the state after all particles have been updated:
   particleSystem->setState(new_state);
 }
-
-///TODO: implement Trapzoidal rule here
+///COMPLETED: implement Trapzoidal rule here
 void Trapzoidal::takeStep(ParticleSystem* particleSystem, float stepSize)
 {/* parameters use lowerCamelCase, local variables use underscore_casing */
   // 'Trapzoidal method' is a little bit more advanced time integrator.

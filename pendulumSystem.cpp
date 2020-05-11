@@ -1,38 +1,210 @@
 
 #include "pendulumSystem.h"
+#include <iostream>
 
-PendulumSystem::PendulumSystem(int numParticles):ParticleSystem(numParticles)
-{
-	m_numParticles = numParticles;
-	
-	// fill in code for initializing the state based on the number of particles
-	for (int i = 0; i < m_numParticles; i++) {
-		
-		// for this system, we care about the position and the velocity
+PendulumSystem::PendulumSystem(int numParticles)
+	: ParticleSystem(numParticles)
+		{
+			m_numParticles = numParticles;
 
-	}
-}
+			vector<Vector3f> state_vector;
+			float spring_rest_len = .1f;
+			float spring_stiffness = 8.f;
 
+			float x_offset = -3;
 
-// TODO: implement evalF
+			Vector3f root_particle_pos(x_offset, 0.0, 0.0);
+			Vector3f root_particle_speed(0.0, 0.0, 0.0);
+			dbug dvar(root_particle_pos.getprint()) eol;
+
+			state_vector.push_back(root_particle_pos);
+			state_vector.push_back(root_particle_speed);
+			m_particle_connections.push_back( ParticleConnection(0) );
+
+			// fill in code for initializing the state based on the number of particles
+			int lastId = 0; // save the last id to add to the particle connections
+			for (int i = 0; i < m_numParticles; i++)
+			{
+				// add a new spring between current and previous particle ...
+				// (NOTE: the id 0 is the root, defined above)
+				m_springs.push_back(Spring(i, i+1, i, spring_rest_len, spring_stiffness));
+				// bookkeeping (used later, when computing Forces)
+				// ... the bookkeeping tracks which particles are connected,
+				// ... and the IDs of the springs between the particles:
+				if (i != 0)
+				{ // if the particle is not root (first one),
+					// ... add neighbour and spring with a previous ID:
+					m_particle_connections[i].addNeighbour(i-1);
+					m_particle_connections[i].addSpring(i-1);
+				}
+				if (i+1 <= m_numParticles)
+				{ // if particle is not the last one, ...
+					// ... add neighbour and spring with next ID:
+					m_particle_connections[i].addNeighbour(i+1);
+					m_particle_connections[i].addSpring(i);
+				}
+				// add a FORWARD connection track what the  particle connections
+				// ... its neighbours will be added in the next iteration ...
+				// ... of the for loop, if it is the last one - add after for loop.
+				m_particle_connections.push_back( ParticleConnection(i+1) );
+				// particles get generated horizontally, spaced twice as far ...
+				// ... as the resting spring length, relative to the parent particle
+				Vector3f particle_pos(x_offset+((i+1)*spring_rest_len*2), 0.f, 0.f);
+				Vector3f particle_speed(0.0, 0.0, 0.0); // give no initial speed
+
+				// for this system, we care about the position and the velocity
+				state_vector.push_back(particle_pos);
+				state_vector.push_back(particle_speed);
+				// and set it as the initial state vector for the system
+				this->setState(state_vector);
+				lastId++; // this is needed for adding the last particle of the chain
+			}
+			// when the loop ends, we need to add the previous particle ...
+			// ... as a neighbour to the last one (dealing with last particle of chain)
+			m_particle_connections[lastId].addNeighbour(lastId-1);
+			m_particle_connections[lastId].addSpring(lastId-1);
+
+			// debugging to see connections and springs:
+			for (unsigned int i = 0; i < m_particle_connections.size(); i++)
+			{
+				dbug dvar(i) eol;
+				m_particle_connections[i].Print();
+			}
+
+			WAIT;
+
+			for (unsigned int i = 0; i < m_springs.size(); i++)
+			{
+				m_springs[i].Print();
+			}
+
+			WAIT;
+
+	 	}
+
+// COMPLETED: implement evalF
 // for a given state, evaluate f(X,t)
 vector<Vector3f> PendulumSystem::evalF(vector<Vector3f> state)
 {
-	vector<Vector3f> f;
+	vector<Vector3f> f; // the derivative state
 
-	// YOUR CODE HERE
+	dbug "in PendulumSystem evalF" eol;
+	for (unsigned int i = 0; i < state.size(); i++)
+	{
+		dbug dvar(state[i].getprint()) eol;
+	}
+	// since this is a second order ODE, and we store both ...
+	// ... the particle's position and its velocity in the system, ...
+	// ... position - even indices, velocity - odd indices (since start from 0)
+	for (unsigned int i = 0; i < state.size(); i++)
+	{
+		if (i%2 == 0)
+		{ // if even - compute derivative of x, which is v (position'=velocity)
+			f.push_back(state[i+1]);
+		}
+		else // odd index
+		{ // , add derivative of 'v' (velocity), which is 'a' (acceleration), ...
+	    // ... which we get from F=ma -> a=F/m, where F is the net force ...
+			// ... (sum of all forces - gravity, viscous drag & spring force)
 
+			// 1. compute gravity force (assuming masses of all particles equal)
+			Vector3f viscous_drag(0.f); // we will compute the net viscous drag
+			int particle_index = (i-1)/2;
+			// using the 9.8m/s^2 approximation, down:
+			Vector3f gravity = 1.f * Vector3f(0.f, -9.8, 0.f);
+
+			// 2. compute viscous drag [F = -kx', where k=drag, x'=velocity]
+			// ... (go through every spring the particle is connected to)
+			int nr_attached_springs = m_particle_connections[particle_index].m_attached_springs.size();
+			for (int j = 0; j < nr_attached_springs; j++)
+			{ // compute the force generated by ALL springs attached to particle
+				// get the numeric id of the j'th spring attached to particle:
+				int spring_index = m_particle_connections[particle_index].m_attached_springs[j];
+				float k = m_springs[spring_index].m_stiffness; // drag
+				// add to the net drag force;
+				// ... viscous_drag = stiffness coef * velocity
+				viscous_drag += -1.f * k * state[i]; //  odd state indices are particle velocity
+			}
+			// average the drag force:
+			viscous_drag = viscous_drag / nr_attached_springs;
+
+			// 3. compute spring force:
+			/*
+			where k=drag, dist=xi-xj - distance between neighbouring particles
+				F = -k * (abs(dist) - r) * dist/abs(dist),
+				      r=rest length of spring (member var 'm_rest_length')
+			*/
+			// ... (go through every spring the particle is connected to)
+			Vector3f spring_force(0.f);
+			for (int j = 0; j < nr_attached_springs; j++)
+			{
+				int spring_index = m_particle_connections[particle_index].m_attached_springs[j];
+
+				// particle position is stored at even numbers in the state ...
+				// ... hence multiplied by 2:
+				int particle1_index = 2 * m_springs[spring_index].m_particle1;
+				int particle2_index = 2 * m_springs[spring_index].m_particle2;
+
+				Vector3f distance = state[particle2_index] - state[particle1_index];
+				float r = m_springs[spring_index].m_rest_length;
+				float k = m_springs[spring_index].m_stiffness;
+
+				spring_force += -k * (distance.abs() - r) * (distance/distance.abs());
+			}
+			// average the spring force
+			spring_force = spring_force / nr_attached_springs;
+
+			// 4. sum all forces
+			Vector3f net_force = gravity + viscous_drag + spring_force;
+
+			// 5. get acceleration (second derivative of x, in a system (x, x') )
+			// assume all particle masses are equal and are 1.0:
+			Vector3f acceleration = net_force / nr_attached_springs;
+			// if it is the root particle, we lock it - net force is 0, a=0
+			if (i==1) acceleration = Vector3f(0.f);
+
+			f.push_back(acceleration);
+		}
+	}
+
+	for (unsigned int i = 0; i < f.size(); i++)
+	{
+		dbug dvar(i) << dvar(f[i].getprint()) eol;
+	}
+	WAIT;
 	return f;
 }
 
 // render the system (ie draw the particles)
 void PendulumSystem::draw()
 {
-	for (int i = 0; i < m_numParticles; i++) {
-		Vector3f pos ;//  position of particle i. YOUR CODE HERE
+	dbug dvar(m_numParticles) eol;
+	// looping for numParticles plus one, since the root is always added
+	// ... and multiply by two, since both positions and velocities are
+	// ... sotred in the m_vVecState
+	for (int i = 0; i < (m_numParticles+1)*2; i+=2) {
+		Vector3f pos = m_vVecState[i];//  position of particle i. YOUR CODE HERE
+		dbug "displaying " << i/2 << " particle at pos " << dvar(pos.getprint()) eol;
+		// std::cin.get();
 		glPushMatrix();
 		glTranslatef(pos[0], pos[1], pos[2] );
 		glutSolidSphere(0.075f,10.0f,10.0f);
 		glPopMatrix();
+
+		// draw the actual springs (optional)
+		for (int j = 0; j < m_particle_connections[i/2].m_neighbours.size(); j++)
+		{
+			dbug dvar(m_particle_connections[i/2].m_neighbours[j]) eol;
+			// for each neighbour, add a line between them:
+			Vector3f neigh_pos = m_vVecState[2*(m_particle_connections[i/2].m_neighbours[j])];
+			glPushMatrix();
+			glLineWidth(i*10);
+			glBegin(GL_LINES);
+	    glVertex3f(pos[0], pos[1], pos[2]);
+	    glVertex3f(neigh_pos[0], neigh_pos[1], neigh_pos[2]);
+			glEnd();
+			glPopMatrix();
+		}
+
 	}
 }
