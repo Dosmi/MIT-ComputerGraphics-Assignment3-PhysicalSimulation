@@ -1,6 +1,6 @@
 #include "TimeStepper.hpp"
 #include <iostream>
-///COMPLETED: implement Explicit Euler time integrator here 
+///COMPLETED: implement Explicit Euler time integrator here
 void ForwardEuler::takeStep(ParticleSystem* particleSystem, float stepSize)
 { /* parameters use lowerCamelCase, local variables use underscore_casing */
   // 'Euler method' is the simplest time integrator.
@@ -10,7 +10,6 @@ void ForwardEuler::takeStep(ParticleSystem* particleSystem, float stepSize)
    *               X(t+h) = X + h * derivative_X(t)
    *              (new_state = given_state + stepSize * state_derivative)
    */
-  dbug "taking euler step ... " eol;
   // iterating through all particles, we will gather a new state:
   vector<Vector3f> new_state;
   // to be updated is the state of the passed PS (particle system)
@@ -26,7 +25,6 @@ void ForwardEuler::takeStep(ParticleSystem* particleSystem, float stepSize)
     Vector3f new_particle_state;
     new_particle_state = given_state[i] + stepSize * state_derivative[i];
 
-    dbug "new_particle_state: " << new_particle_state.getprint() eol;
     new_state.push_back(new_particle_state);
   }
   // update the state after all particles have been updated:
@@ -46,8 +44,6 @@ void Trapzoidal::takeStep(ParticleSystem* particleSystem, float stepSize)
    *               X(t+h) = X + h/2 * (f0 + f1)/2
    *              (new_state = given_state + stepSize/2 * (f0 + f1)/2 )
    */
-   // dbug className(__PRETTY_FUNCTION__) eol;
-   dbug "taking trapzoidal step ... " eol;
    // to be updated is the state of the passed PS (particle system)
    vector<Vector3f> original_state = particleSystem->getState();
    vector<Vector3f> intermediate_state;
@@ -78,7 +74,6 @@ void Trapzoidal::takeStep(ParticleSystem* particleSystem, float stepSize)
      // finally, for each particle i will compute the new trapizoidal state
      new_particle_state = original_state[i] + stepSize * derivative_average;
 
-     dbug "new_particle_state: " << new_particle_state.getprint() eol;
      new_state.push_back(new_particle_state);
    }
    // ONLY AFTER we have the final state do we update the particle state:

@@ -220,6 +220,14 @@ std::string Vector3f::getprint() const
   return to_print.str();
 }
 
+// static
+float Vector3f::distance( const Vector3f& v0, const Vector3f& v1 )
+{
+  return sqrt( (v1.x() - v0.x()) * (v1.x() - v0.x()) +
+            (v1.y() - v0.y()) * (v1.y() - v0.y()) +
+            (v1.z() - v0.z()) * (v1.z() - v0.z()) );
+}
+
 Vector3f& Vector3f::operator += ( const Vector3f& v )
 {
 	m_elements[ 0 ] += v.m_elements[ 0 ];

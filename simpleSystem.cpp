@@ -24,7 +24,6 @@ vector<Vector3f> SimpleSystem::evalF(vector<Vector3f> state)
 		// right handside of this simple system is (-y, x, 0)
 		f.push_back( Vector3f(-1*state[i][1], state[i][0], 0.f) );
 	}
-	dbug "" eol;
 
 	return f;
 }
@@ -36,7 +35,6 @@ void SimpleSystem::draw()
 		for (unsigned int i = 0; i < m_vVecState.size(); i++)
 		{
 			Vector3f pos = m_vVecState[i];//YOUR PARTICLE POSITION
-			dbug dvar(pos.getprint()) eol;
 
 			glPushMatrix();
 			glTranslatef(pos[0], pos[1], pos[2] );
