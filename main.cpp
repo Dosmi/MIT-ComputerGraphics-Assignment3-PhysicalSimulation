@@ -14,14 +14,20 @@
 
 ///SUGGESTED: include more headers if necessary
 
+#include <map>
+#include <vecmath.h>
+#include <vector>
+#include <iostream>
+
+#include "particle.h"
+#include "spring.h"
+
 #include "TimeStepper.hpp"
 #include "simpleSystem.h"
 #include "pendulumSystem.h"
+#include "ClothSystem.h"
 
 using namespace std;
-
-// #define dbug std::cout<<__FILE__<<"-"<<__LINE__<<": "<< // Debug cout
-// #define eol << std::endl // End Of Line
 
 // Globals here.
 namespace
@@ -37,14 +43,13 @@ namespace
     // seed the random number generator with the current time
     srand( time( NULL ) );
     // system = new SimpleSystem();
-    system = new PendulumSystem(3);
-    dbug dvar(argv[1]) eol;
+    // system = new PendulumSystem(8);
+    system = new ClothSystem(15);
     if (std::string(argv[1])  == "e") timeStepper = new ForwardEuler();
     else if (std::string(argv[1])  == "t") timeStepper = new Trapzoidal();
     else timeStepper = new RK4();
 
     step_h = atof(argv[2]);
-    dbug dvar(step_h) eol;
   }
 
   // Take a step forward for the particle shower
@@ -232,7 +237,8 @@ namespace
 
         // This draws the coordinate axes when you're rotating, to
         // keep yourself oriented.
-        if( g_mousePressed )
+        // if( g_mousePressed ) // TURNED OFF AXIS WHEN ROTATING
+        if( false )
         {
             glPushMatrix();
             Vector3f eye = camera.GetCenter();
@@ -269,7 +275,6 @@ namespace
 
     void timerFunc(int t)
     {
-        dbug dvar(t) eol;
         stepSystem();
 
         glutPostRedisplay();
@@ -289,12 +294,13 @@ int main( int argc, char* argv[] )
 
     // Initial parameters for window position and size
     glutInitWindowPosition( 60, 60 );
-    glutInitWindowSize( 600, 600 );
+    glutInitWindowSize( 1920, 1080 );
 
-    camera.SetDimensions( 600, 600 );
+    camera.SetDimensions( 1920, 1080 );
 
-    camera.SetDistance( 10 );
+    camera.SetDistance( 3 );
     camera.SetCenter( Vector3f::ZERO );
+    // camera.SetCenter( Vector3f(1.0, 3.0, 4.0) );
 
     glutCreateWindow("Assignment 4");
 
